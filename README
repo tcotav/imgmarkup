@@ -1,0 +1,10 @@
+Simple tool to 'markup' coordinates in an image that you will further work on.
+
+The idea is basically you are going to do cool stuff over the top of an image 
+and you'll use this to determine what coordinates that cool stuff will revolve
+around.  Numbered pins will be dropped where click on the canvas.  The 
+coordinates of that drop will be recorded in the div beneath the canvas.
+
+Save canvas as image will save the image in a hack-ish sort of way.  It will
+pop up a new window and write out the canvas data to that window.  You will
+then have to right click/save as to get the image down to your file system.
