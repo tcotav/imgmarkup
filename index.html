@@ -1,0 +1,191 @@
+<html>
+<head>
+<style>
+#page {
+    margin:0 auto;
+    padding: 6 6 6 6;
+    -moz-box-shadow: 1px 1px 1px 1px #000;
+    -webkit-box-shadow: 1px 1px 1px 1px #000;
+    box-shadow: 1px 1px 1px 1px #000;
+    border: 1px 1px 1px 1px;
+}
+#drawhere {
+    margin:0 auto;
+    width:100%;
+}
+.ctrlbox {
+    background-color: #ccc;
+    margin:0 auto;
+    padding: 6 6 6 6;
+    border: 1px solid white;
+}
+.outside {
+    margin:0 auto;
+    padding: 6 6 6 6;
+}
+
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+<script type="text/javascript" charset="utf-8">
+    var canvas = null;
+    var context = null;
+
+    var UI_PAUSE_TIME=300;
+
+    // if you use a remote URI here -- it works BUT you won't be able to save
+    // it'll throw a security exception
+    var bgImage = "img/Stavanger_city_demo.png";
+
+    function toCanvasX(c, e) {
+        var posx = 0;
+        if (e.pageX)   {
+            posx = e.pageX;
+        } 
+        else if (e.clientX) {
+            posx = e.clientX + document.body.scrollLeft
+                + document.documentElement.scrollLeft;
+        }
+        posx = posx - c.offsetLeft;
+        console.log("tocanvasx: " + posx);
+        return posx;
+    }
+
+    function toCanvasY(c, e) {
+        var posy = 0;
+        if (e.pageY)   {
+            posy = e.pageY;
+        } 
+        else if (e.clientY)   {
+            posy = e.clientY + document.body.scrollTop
+            + document.documentElement.scrollTop;
+        }
+        posy = posy - c.offsetTop;
+        console.log("tocanvasy: " + posy);
+        return posy;
+    }
+
+    function canvasClick(e) {
+        var canvLoc = {"x":toCanvasX(this, e), "y":toCanvasY(this, e)};
+        console.log(canvLoc.x + " " + canvLoc.y);
+        canvUserAction(canvLoc);
+    }
+
+    function canvUserAction(canvLoc) {
+        /* we do two things here:
+            1) we put a marker down on the canvas and 
+            2) we write out the coordinates down in the 
+        */
+        var radius=10;
+        var color="red";
+        var bordercolor="white";
+        var alpha=1;
+
+        if(fClickLock) { return;} // block multiclicks
+        CURRENTCOUNT++;
+        renderCircle(canvLoc.x, canvLoc.y, radius+1, bordercolor, alpha);
+        renderCircle(canvLoc.x, canvLoc.y, radius, color, alpha);
+        renderNumberInCircle(canvLoc.x, canvLoc.y);
+
+        fClickLock=true;
+        t=setTimeout("releaseClickLock()", UI_PAUSE_TIME);
+        $("#datadump").append("<li><b>point " + CURRENTCOUNT + "</b> - " + "(" + canvLoc.x + ", " + canvLoc.y + ")</li>\n");
+        return;
+    }
+
+    var CURRENTCOUNT=0;
+    var fClickLock=false;
+
+    /* util method to make sure we only capture the FIRST click from user on map */
+    function releaseClickLock() {
+        fClickLock=false;
+    }
+
+    function renderNumberInCircle(x, y) {
+
+        var drawX= x - (Math.round(context.measureText(CURRENTCOUNT).width/2))
+        var drawY= y + 4;
+        context.fillStyle="white";
+        context.font="10pt Helvetica bold, sans-serif";
+        context.fillText(CURRENTCOUNT, drawX, drawY);
+    }
+
+    function renderCircle(x, y, radius, color, alpha) {
+        context.beginPath();
+        context.arc(x, y, radius, 0, Math.PI*2, true); 
+        context.closePath();
+        context.fillStyle=color;
+        context.globalAlpha=alpha; // where alpha between 0 and 1 
+        context.fill();
+    }
+
+ 
+    function _initCanvas(height, width) {
+        canvas.height = height;
+        canvas.width=width; 
+        console.log("canvas initialized to h: " + height + " w:" + width);
+
+    }
+
+    function saveCanvas() {
+        var img = canvas.toDataURL("image/png");
+        imgDoc = window.open("", "saved canvas", "width=" + canvas.width 
+            + ",height=" + canvas.height + ",status, scrollbars, resizable");
+        imgDoc.document.write('<img src="' + img + '"/>');
+    }
+
+    function _renderBgImage() {
+        // init canvas to be same size as bg image
+        _initCanvas(imageObj.height, imageObj.width);
+        context.drawImage(imageObj, 0, 0);
+    }
+
+    var imageObj;
+
+    function initCanvas() {
+        canvas = document.getElementById("canvas1");
+        context = canvas.getContext("2d");
+        imageObj = new Image();
+        imageObj.src = bgImage;
+
+        // need a gap/pause else it won't render
+        t=setTimeout("_renderBgImage()", UI_PAUSE_TIME);
+
+        // reset the count
+        CURRENTCOUNT=0;
+        // reset the data dump
+        $("#datadump").html("");
+    }
+
+    function onBodyLoad() {
+        console.log("body load");
+        $(document).ready(function() {
+            // init canvas to be same size as bg image
+            initCanvas();
+            canvas.addEventListener("mouseup", canvasClick, false);
+            canvas.addEventListener("mousedown", canvasClick, false);
+        });
+    };
+
+</script>
+</head>
+<body onload="onBodyLoad();">
+<center>
+<div id="page" class="ctrlbox">
+    <div id="desc" class="ctrlbox"><b>Simple utility to 'markup' an image to later render on top of via javascript or processingjs.</b></div>  
+    <div id="controls" class="ctrlbox" style="width=50%">
+        <div style="width=100%">
+            Reset Canvas/Clear Markers: <input type="button" value="Clear" onClick="initCanvas();" /></div>
+        <div style="width=100%">
+            Save Image of Current Canvas:<input type="button" value="Save Image" onClick="saveCanvas();" />
+        </div>
+    </div>
+
+    <div id="drawhere">
+    <canvas id="canvas1"></canvas>
+    </div>
+    <div id="datadump" class="ctrlbox"></div>
+</div>
+<div class="outside"><b>Image source: <a href="http://commons.wikimedia.org/wiki/File:Stavanger_city_map.png">Wikimedia Commons - Stavanger City Map, Norway. - Author: Kevin Paul Scarrott</a></b></div>
+</center>
+</body>
+</html>
