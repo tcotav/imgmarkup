@@ -147,6 +147,7 @@
         imageObj = new Image();
         imageObj.src = bgImage;
 
+        _renderBgImage();
         // need a gap/pause else it won't render
         t=setTimeout("_renderBgImage()", UI_PAUSE_TIME);
 
